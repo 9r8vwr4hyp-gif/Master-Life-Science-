@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Modulplanung, Stundenplan, Prüfungstermine und Notenrechner für den M.Sc. Life Science (PO 2025) an der Universität Konstanz.">
+<meta name="theme-color" content="#0a5f7a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Masterplaner">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a5f7a'/%3E%3Crect x='14' y='18' width='36' height='32' rx='4' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M14 28h36M24 12v10M40 12v10' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+html{color-scheme:light}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,-apple-system,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Masterplaner Life Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Kopfzeile mit Kennzahlen, Tabs; Planung = Modulspalte + 4 Semesterspalten; Stundenplan = Wochenraster */
+:root{
+  --bg:#eef2f3; --surface:#ffffff; --surface-2:#f6f8f9; --ink:#15212a; --muted:#5a6872; --line:#d6dee2;
+  --accent:#0a5f7a; --accent-ink:#ffffff; --accent-soft:#dcecf1;
+  --ok:#2e7d4f; --warn:#a86500; --bad:#b3362f;
+  --m1:#2f68b0; --m2:#3b8a4c; --m3:#7f55bd; --m4:#a8741a; --m5:#b54a45; --m6:#5d717d; --m7:#0b7a85;
+  --f-display:"Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171c; --surface:#16222a; --surface-2:#1b2932; --ink:#e4ecef; --muted:#93a4ae; --line:#2b3b45;
+  --accent:#5fb6d3; --accent-ink:#06222c; --accent-soft:#183644;
+  --ok:#6cc58f; --warn:#e3a54a; --bad:#ef7d74;
+  --m1:#7aa7e6; --m2:#7cc38a; --m3:#b495ea; --m4:#e0b05a; --m5:#ec8a83; --m6:#9bb0bc; --m7:#5cc5cf;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --surface:#16222a; --surface-2:#1b2932; --ink:#e4ecef; --muted:#93a4ae; --line:#2b3b45;
+  --accent:#5fb6d3; --accent-ink:#06222c; --accent-soft:#183644;
+  --ok:#6cc58f; --warn:#e3a54a; --bad:#ef7d74;
+  --m1:#7aa7e6; --m2:#7cc38a; --m3:#b495ea; --m4:#e0b05a; --m5:#ec8a83; --m6:#9bb0bc; --m7:#5cc5cf;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.65rem;font-weight:700}
+h2{font-size:1.2rem;font-weight:600}
+h3{font-size:1rem;font-weight:600}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+
+/* Kopf */
+.top{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-end;justify-content:space-between}
+.top .sub{color:var(--muted);margin-top:2px}
+.settings{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field select,.field input,.field textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:0}
+.field textarea{resize:vertical;min-height:60px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:18px}
+.stat{background:var(--surface);padding:12px 16px;min-width:0}
+.stat .v{font-family:var(--f-mono);font-size:1.45rem;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:.85rem;color:var(--muted)}
+.stat .d{font-size:.84rem;color:var(--muted);overflow-wrap:anywhere}
+.meter{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:6px;display:flex}
+.meter i{display:block;height:100%}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.banner{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;background:var(--accent-soft);border-radius:var(--r);padding:10px 14px;margin-top:14px;font-size:.92rem}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-top:22px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{background:none;border:0;padding:10px 14px;font-family:var(--f-display);font-weight:600;font-size:1rem;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.view{padding-top:20px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:7px 12px;font-weight:600;font-size:.92rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:var(--surface);border-color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:.84rem}
+
+/* Modul-Chips */
+.mc{display:inline-flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.74rem;font-weight:500;padding:1px 6px;border-radius:5px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);white-space:nowrap}
+.c-M1{--c:var(--m1)}.c-M2{--c:var(--m2)}.c-M3{--c:var(--m3)}.c-M4{--c:var(--m4)}.c-M5{--c:var(--m5)}.c-M6{--c:var(--m6)}.c-M7{--c:var(--m7)}
+
+/* Planung */
+.plan{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:1000px){.plan{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.mods{padding:6px 0}
+.mods .head{padding:10px 16px 6px;display:flex;justify-content:space-between;align-items:baseline}
+.mrow{padding:10px 16px;border-top:1px solid var(--line);display:grid;gap:5px}
+.mrow:first-of-type{border-top:0}
+.mrow .t{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.mrow .t .n{font-weight:600;flex:1;min-width:0}
+.mrow .bar{height:7px;border-radius:4px;background:var(--surface-2);overflow:hidden;display:flex}
+.mrow .bar i{height:100%;display:block}
+.mrow .s{font-size:.84rem;display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.mrow .h{font-size:.8rem;color:var(--muted)}
+.st-ok{color:var(--ok)}.st-warn{color:var(--warn)}.st-bad{color:var(--bad)}
+.total{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;font-weight:600}
+
+.sems{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1240px){.sems{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.sems{grid-template-columns:minmax(0,1fr)}}
+.sem{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sem.abroad{background:repeating-linear-gradient(135deg,var(--surface-2) 0 12px,color-mix(in srgb,var(--m5) 6%,var(--surface-2)) 12px 24px)}
+.sem.now{border-color:var(--accent)}
+.sem header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:2px 4px 4px}
+.sem header .tt{font-family:var(--f-display);font-weight:600}
+.tag{font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.now{border-color:var(--accent);color:var(--accent)}
+.tag.abr{border-color:var(--m5);color:var(--m5)}
+.card{display:flex;flex-direction:column;gap:5px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+.card:hover{border-color:var(--accent)}
+.card.ex{border-style:dashed}
+.card .r1{display:flex;gap:6px;align-items:center;justify-content:space-between}
+.card .nm{font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.card .r3{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--muted)}
+.pill{font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--surface-2);color:var(--muted)}
+.pill.done{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.run{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.pill.ex{background:transparent;border:1px dashed var(--muted)}
+.wl{font-size:.78rem;color:var(--warn);line-height:1.3}
+.wl.bad{color:var(--bad)}
+.dt{font-size:.78rem;color:var(--muted);font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.vbtns{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.vbtns .btn{white-space:nowrap}
+.add{border:1px dashed var(--line);background:transparent;border-radius:8px;padding:8px;color:var(--muted);font-weight:600}
+.add:hover{border-color:var(--accent);color:var(--accent)}
+.semsum{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Modal */
+.ov{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 45%,transparent);display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) 16px 24px;overflow-y:auto;z-index:50}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(640px,100%);padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.modal .mh{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.grid2,.grid3{grid-template-columns:minmax(0,1fr)}}
+.span2{grid-column:1/-1}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+.actions .r{display:flex;gap:8px;flex-wrap:wrap}
+.chk{display:flex;gap:8px;align-items:center}
+.catlist{display:flex;flex-direction:column;max-height:52vh;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
+.catrow{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--line);text-align:left;background:var(--surface);border-left:0;border-right:0;border-bottom:0;width:100%}
+.catrow:first-child{border-top:0}
+.catrow:hover{background:var(--surface-2)}
+.catrow .cn{font-weight:600;overflow-wrap:anywhere}
+.catrow .cm{font-size:.8rem;color:var(--muted)}
+.catrow .ce{font-family:var(--f-mono);font-size:.82rem;white-space:nowrap}
+.catgrp{padding:7px 12px;background:var(--surface-2);border-top:1px solid var(--line)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.fbtn{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:3px 11px;font-size:.84rem;font-weight:600;color:var(--muted)}
+.fbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.info{font-size:.84rem;background:var(--surface-2);border-radius:8px;padding:8px 10px;color:var(--muted)}
+
+/* Stundenplan */
+.sp-head{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tt-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.ttg{display:grid;grid-template-columns:52px repeat(5,minmax(100px,1fr));min-width:600px;position:relative}
+.ttg .dh{padding:8px;font-family:var(--f-display);font-weight:600;border-bottom:1px solid var(--line);border-left:1px solid var(--line);text-align:center}
+.ttg .dh.today{color:var(--accent)}
+.ttg .corner{border-bottom:1px solid var(--line)}
+.ttg .hours{position:relative}
+.ttg .hours span{position:absolute;right:6px;transform:translateY(-50%);font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.ttg .dh .dd{font-family:var(--f-mono);font-size:.74rem;font-weight:400;color:var(--muted)}
+.ttg .adl,.ttg .ad{min-height:40px}
+.ttg .adl{font-size:.68rem;color:var(--muted);text-align:right;padding:6px 6px 6px 0;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em;line-height:1.2;hyphens:manual}
+.ttg .ad{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px;display:flex;flex-direction:column;gap:3px;min-height:30px;min-width:0;background:var(--surface-2)}
+.adc{font-size:.74rem;line-height:1.2;text-align:left;border-radius:5px;padding:3px 6px;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 18%,var(--surface));overflow-wrap:anywhere}
+.adc.exm{--c:var(--warn);font-weight:600}
+.wknav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wknav .num{font-size:.9rem;min-width:13ch;text-align:center}
+.btn:disabled{opacity:.4;cursor:default}
+.ttg .day{position:relative;border-left:1px solid var(--line);background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% var(--hpx)}
+.slot{position:absolute;border-radius:6px;padding:4px 6px;font-size:.78rem;line-height:1.2;overflow:hidden;text-align:left;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 16%,var(--surface));color:var(--ink)}
+.slot b{display:block;font-weight:600;overflow-wrap:anywhere}
+.slot .tm{font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.slot.conf{border:2px solid var(--bad);box-shadow:0 0 0 2px color-mix(in srgb,var(--bad) 25%,transparent)}
+.slot.ex{border-style:dashed}
+.form-row{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,.9fr) minmax(0,.9fr) minmax(0,1.1fr) minmax(0,1fr) auto;gap:8px;align-items:end;padding:14px;margin-top:14px}
+@media (max-width:980px){.form-row{grid-template-columns:repeat(3,minmax(0,1fr))}.form-row .wide{grid-column:1/-1}}
+@media (max-width:520px){.form-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.conflicts{margin-top:12px;color:var(--bad);font-size:.9rem}
+.blocklist{margin-top:14px}
+.blocklist li{margin:3px 0}
+
+/* Prüfungen */
+.ex-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+@media (max-width:900px){.ex-grid{grid-template-columns:minmax(0,1fr)}}
+.exlist{display:flex;flex-direction:column;gap:8px}
+.exam{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.exam.past{opacity:.72}
+.exam.ex{border-style:dashed}
+.dateblk{text-align:center;border-right:1px solid var(--line);padding-right:12px}
+.dateblk .d{font-family:var(--f-display);font-size:1.6rem;font-weight:700;line-height:1}
+.dateblk .m{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.exam .ti{font-weight:600;overflow-wrap:anywhere}
+.exam .mt{font-size:.84rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.cd{font-family:var(--f-mono);font-size:.8rem;padding:2px 8px;border-radius:20px;background:var(--surface-2);white-space:nowrap;text-align:center}
+.cd.soon{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.cd.today{background:var(--accent);color:var(--accent-ink)}
+.exform{padding:14px;display:flex;flex-direction:column;gap:10px}
+.ex-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+@media (max-width:560px){.exam{grid-template-columns:52px minmax(0,1fr)}.ex-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end}}
+.empty{padding:22px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r)}
+
+/* Noten */
+.gr-top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:stretch}
+@media (max-width:860px){.gr-top{grid-template-columns:minmax(0,1fr)}}
+.big{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.big .g{font-family:var(--f-display);font-size:3.4rem;font-weight:700;line-height:1;letter-spacing:-.02em}
+.big .g small{font-family:var(--f-mono);font-size:1rem;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:8px}
+.pred{font-weight:600}
+.target{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.need{font-size:1.05rem}
+.need b{font-family:var(--f-mono)}
+table{border-collapse:collapse;width:100%}
+.tbl-wrap{overflow-x:auto;margin-top:20px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;background:var(--surface-2)}
+td.r,th.r{text-align:right}
+td select{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 5px}
+tr.modrow td{background:color-mix(in srgb,var(--c) 7%,var(--surface));font-weight:600}
+.wbar{display:inline-block;height:6px;border-radius:3px;background:var(--accent);vertical-align:middle;margin-right:6px}
+
+footer.data{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;font-size:.88rem;color:var(--muted)}
+footer .r{display:flex;gap:8px;flex-wrap:wrap}
+.save{display:inline-flex;align-items:center;gap:6px}
+.save i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.save.ok i{background:var(--ok)}.save.pend i{background:var(--warn)}.save.err i{background:var(--bad)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:.9rem;z-index:60;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.card,.btn,.slot{transition:border-color .15s,background .15s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Masterplaner Life Science</h1>
+      <div class="sub">M.Sc. Life Science · Universität Konstanz · PO 2025 · 120 ECTS</div>
+    </div>
+    <div class="settings">
+      <label class="field"><span class="lbl">Studienbeginn</span>
+        <select id="set-start"></select></label>
+      <label class="field"><span class="lbl">Auslandssemester</span>
+        <select id="set-abroad"><option value="0">keins</option><option value="1">Semester 1</option><option value="2">Semester 2</option><option value="3">Semester 3</option><option value="4">Semester 4</option></select></label>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="banner"></div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-tab="planung" id="tab-planung">Planung</button>
+    <button class="tab" role="tab" data-tab="stundenplan" id="tab-stundenplan">Stundenplan</button>
+    <button class="tab" role="tab" data-tab="pruefungen" id="tab-pruefungen">Prüfungen</button>
+    <button class="tab" role="tab" data-tab="noten" id="tab-noten">Noten</button>
+  </nav>
+  <main class="view" id="view"></main>
+
+  <footer class="data">
+    <span class="save" id="save"><i></i><span>Lädt …</span></span>
+    <div class="r">
+      <button class="btn sm ghost" data-act="export-json">Backup (JSON)</button>
+      <button class="btn sm ghost" data-act="export-csv">Notenliste (CSV)</button>
+      <label class="btn sm ghost" for="import-file">Backup laden</label>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+    </div>
+  </footer>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- Studienordnung ---------- */
+const MODS = {
+  M1:{n:"Kernkompetenzen Chemie",req:12,mode:"exact",w:.2,gReq:12,hint:"Mastervorlesungen Chemie"},
+  M2:{n:"Kernkompetenzen Biologie",req:10,mode:"exact",w:.2,gReq:10,hint:"Theorieteile von Bio-Vertiefungskursen (VTK), je 5 ECTS"},
+  M3:{n:"Forschungspraktika",req:20,mode:"exact",w:.2,gReq:20,hint:"Praktikum zu Chemie-Mastervorlesung (10) + Praxisteil eines VTK (10, 6 Wochen)"},
+  M4:{n:"Wahlbereich Life Science",req:9,mode:"min",w:0,hint:"Veranstaltungen aus Chemie und Biologie, unbenotet für die Endnote"},
+  M5:{n:"Forschungs- oder Industriepraktikum",req:9,mode:"min",w:0,hint:"Extern 6 Wo = 9, ≥ 3 Monate = 18; Industrie ≥ 3 Monate = 18"},
+  M6:{n:"Überfachliche Kompetenzen",req:0,max:15,mode:"range",w:0,hint:"Sektion I bis 15, fächerübergreifend bis 6 ECTS"},
+  M7:{n:"Abschlussmodul",req:45,mode:"exact",w:.4,gReq:30,hint:"Masterarbeit 30 (benotet) + Kolloquium 15 (unbenotet)"}
+};
+const MKEYS = Object.keys(MODS);
+const GRADES = ["1.0","1.3","1.7","2.0","2.3","2.7","3.0","3.3","3.7","4.0"];
+const AREAS = {chem:"Chemie",bio:"Biologie",ext:"Extern",ueber:"Überfachlich",ab:"Abschluss"};
+const KINDS = {V:"Vorlesung",P:"Praktikum",S:"Seminar/Kurs",X:"Praktikum extern",A:"Abschluss"};
+const TERMS = {WS:"nur Wintersemester",SS:"nur Sommersemester",beide:"WS und SS",frei:"nach Absprache"};
+const STATUS = {plan:"geplant",run:"belegt",done:"bestanden"};
+const DAYS = ["Mo","Di","Mi","Do","Fr"];
+const SLOT_TYPES = ["Vorlesung","Übung","Seminar","Tutorium","Praktikum"];
+const EXAM_TYPES = ["Klausur","Mündliche Prüfung","Präsentation","Kolloquium","Bericht-Abgabe","Sonstiges"];
+
+/* ---------- Katalog aus dem Modulhandbuch (Feb. 2026) ---------- */
+const CAT = [];
+function L(id,name,ects,term,lect,exam,o){CAT.push(Object.assign({id,name,kind:"V",area:"chem",ects:[ects],term,lect,exam,mods:["M1","M4"],grp:"Mastervorlesungen Chemie"},o||{}))}
+function P(id,name,lect,o){CAT.push(Object.assign({id,name,kind:"P",area:"chem",ects:[10,5],term:"frei",lect,exam:"Laborarbeit + Bericht/Vortrag",mods:["M3","M5","M4"],grp:"Praktika Chemie (3 Wo = 5, 6 Wo = 10 ECTS)"},o||{}))}
+L("aeoc","Advanced Element Organic Chemistry",6,"WS","Winter","Klausur 2 h");
+L("aoc","Advanced Organic Chemistry",6,"WS","Gaich, Wittmann","Klausur");
+L("bioc","Biocatalysis – From Chemical Logic to Modern Enzymology",6,"WS","Hartig, Barra","Klausur");
+L("bpc","Biophysical Chemistry",6,"WS","Hauser","Mündlich 30 min");
+L("bpol","Biopolymer Chemistry",6,"SS","Wittmann","Klausur");
+L("nobel","Breakthroughs in natural sciences (Nobel prizes)",3,"WS","Kovermann","Präsentation 30 min");
+L("coll","Dispersion Colloids in Research and Industry",6,"WS","Wittemann","Vortrag + Kolloquium 40 min");
+L("echem","Electrochemistry",3,"WS","Gebauer","Klausur");
+L("solid","Solid State Formation: Mechanisms, Analytics, Applications",6,"SS","Gebauer","Klausur oder mündlich");
+L("gene","Gene Expression and Replication",6,"WS","Hartig","Klausur + Seminarvortrag",{note:"Meist geblockt im Januar–Februar"});
+L("nmr","High-resolution NMR spectroscopy (biol./biophys.)",6,"SS","Kovermann","Vortrag + Kolloquium");
+L("ind","Industrial Chemistry and Renewable Resources",6,"WS","Mecking","Prüfung ca. 45 min + Seminarvortrag");
+L("lum","Luminescent Transition Metal Complexes",3,"SS","Wang","Klausur");
+L("moc","Metal-Organic Chemistry and Catalysis",6,"SS","Winter","Mündlich 45 min oder Klausur 2 h");
+L("mspec","Molecular Spectroscopy",6,"SS","Zumbusch","Mündlich 30 min");
+L("cms","Modern Methods in Complex Molecule Synthesis",6,"SS","Gaich","Klausur");
+L("micro","Optical microscopy in life and material science",6,"WS","Zumbusch","Präsentation + mündlich");
+L("func","Synthesis and Properties of Functional Materials",6,"SS","Mecking, Göttker","Prüfung ca. 45 min");
+L("nat","Synthesis of natural products and drugs",6,"SS","Gaich","Klausur");
+L("theo","Theoretical Chemistry",6,"WS","Peter","Klausur");
+L("data","Working with Scientific Data",3,"SS","Hutter-Sumowski, Kovermann","Hausarbeit");
+P("aeoc-p","Advanced Element Organic Chemistry – Praktikum","Winter");
+P("aoc-p","Advanced Organic Chemistry – Praktikum","Gaich, Wittmann",{note:"Modulhandbuch nennt Vorlesung Biopolymer Chemistry (vorher oder nachher)"});
+P("bioc-p","Biocatalysis – Enzyme Discovery, Mechanism, Engineering – Praktikum","Hartig, Barra");
+P("bpc-p","Biophysical Chemistry – Praktikum","Hauser u. a.",{prereq:{id:"bpc",strict:true}});
+P("bpol-p","Biopolymer Chemistry – Praktikum","Wittmann",{prereq:{id:"bpol",strict:false}});
+P("coll-p","Dispersion Colloids – Praktikum","Wittemann",{prereq:{id:"coll",strict:false}});
+P("solid-p","Mechanisms of Solid-State Formation – Praktikum","Gebauer");
+P("gene-p","Gene Expression and Replication – Praktikum","Hartig");
+P("nmr-p","High-resolution NMR – Praktikum","Kovermann");
+P("ind-p","Industrial Chemistry and Renewable Resources – Praktikum","Mecking");
+P("lum-p","Luminescent Transition Metal Complexes – Praktikum","Wang",{note:"3–4 Plätze pro Semester"});
+P("moc-p","Metal-Organic Chemistry and Catalysis – Praktikum","Winter");
+P("mspec-p","Molecular Spectroscopy – Praktikum","Hauser, Zumbusch");
+P("cms-p","Complex Molecule Synthesis – Praktikum","Gaich");
+P("micro-p","Optical microscopy – Praktikum","Zumbusch");
+P("func-p","Functional Materials – Praktikum","Mecking, Göttker");
+P("nat-p","Natural products and drugs – Praktikum","Gaich");
+P("theo-p","Theoretical Chemistry / Molecular Simulation – Praktikum","Peter");
+const ASP = {grp:"Aspekte der Chemie (nur wenn nicht im Bachelor belegt)",mods:["M4"],term:"frei",lect:"",exam:"siehe Bachelor-Modulhandbuch"};
+[["asp-bc","Biochemie",6,"V"],["asp-bcp","Praktikum Biochemie",5,"P"],["asp-pol","Synthese und Materialeigenschaften von Polymeren",6,"V"],["asp-polp","Praktikum Synthese und Materialeigenschaften von Polymeren",5,"P"],["asp-kol","Kolloidchemie",6,"V"],["asp-kolp","Praktikum Kolloidchemie",5,"P"],["asp-pcp","Physikalische Chemie der Polymere",3,"V"],["asp-ms","Praktikum Molekülspektroskopie",5,"P"],["asp-het","Heterozyklen und Naturstoffe",3,"V"]]
+  .forEach(([id,name,e,k])=>CAT.push(Object.assign({id,name,kind:k,area:"chem",ects:[e]},ASP)));
+const BIO = {grp:"Biologie",area:"bio",term:"frei",lect:"",exam:"siehe Modulhandbuch Biologie"};
+CAT.push(Object.assign({id:"bio-v",name:"Vertiefungskurs Biologie – Vorlesung",kind:"V",ects:[10,5],mods:["M2","M4"],hidden:true,note:"Platzhalter"},BIO));
+CAT.push(Object.assign({id:"bio-p",name:"Praktikum zum Vertiefungskurs Biologie (6 Wochen)",kind:"P",ects:[10],mods:["M3","M4"],hidden:true,note:"Platzhalter"},BIO));
+CAT.push(Object.assign({id:"bio-fp",name:"Forschungspraktikum Biologie",kind:"P",ects:[10],mods:["M5"],graded:false},BIO));
+const EXT = {grp:"Forschungs- und Industriepraktika",area:"ext",kind:"X",term:"frei",lect:"",exam:"Teilnahmebestätigung",mods:["M5"],graded:false};
+CAT.push(Object.assign({id:"ext6",name:"Forschungspraktikum extern (6 Wochen)",ects:[9]},EXT));
+CAT.push(Object.assign({id:"ext3",name:"Forschungspraktikum extern (mind. 3 Monate)",ects:[18]},EXT));
+CAT.push(Object.assign({id:"indp",name:"Industriepraktikum (mind. 3 Monate)",ects:[18]},EXT));
+const UEB = {grp:"Überfachliche Kompetenzen",area:"ueber",kind:"S",term:"beide",lect:"",exam:"",mods:["M6"],graded:false};
+CAT.push(Object.assign({id:"sek1",name:"Kurs aus Sektion I",ects:[3]},UEB));
+CAT.push(Object.assign({id:"fue",name:"Fächerübergreifendes Angebot (Sektion II/III, SQ-Zentrum, Sprachen)",ects:[3]},UEB));
+const ABS = {grp:"Abschlussmodul",area:"ab",kind:"A",term:"beide",lect:"",mods:["M7"]};
+CAT.push(Object.assign({id:"ma",name:"Masterarbeit",ects:[30],exam:"Schriftliche Arbeit, 2 Gutachten",note:"6 Monate; Voraussetzung: alle Studienleistungen und die mündliche Abschlussprüfung"},ABS));
+CAT.push(Object.assign({id:"koll",name:"Kolloquium zur Masterarbeit",ects:[15],exam:"Vortrag + Teilnahme an Kolloquien",graded:false,note:"Unbenotet, läuft über 2 Semester"},ABS));
+/* ---------- Vertiefungskurse Biologie (VTK-Heft, Sept. 2026) ---------- */
+const VTKS=[
+ ["amelio","Systems & Molecular Toxicology: Cancer Risk and Predisposition","Amelio","WS",1,{WS2026:"09.11.–18.12.26",WS2027:"08.11.–17.12.27"},"Grundkenntnisse Toxikologie, Biochemie, Zell- und Molekularbiologie"],
+ ["bahl","Behavioral Neurobiology","Bahl, Kleineidam u. a.","SS",2,{SS2027:"07.06.–16.07.27",SS2028:"19.06.–28.07.28"},"Retreat in den Alpen an einem der ersten Wochenenden"],
+ ["basler","Cellular Immunology","Basler, Legler, Aichem, Gutjahr","WS",1,{WS2026:"02.11.–11.12.26",WS2027:"08.11.–17.12.27"},"Voraussetzung: Immunologie-Vorlesung, Zellbiologie I+II. Nur Theorie: Paper-Zusammenfassung + VTK-Klausur"],
+ ["becks","Theoretical and Experimental Ecology and Evolution","Becks","SS",1,{SS2027:"12.04.–21.05.27",SS2028:"24.04.–02.06.28"},"Grundkenntnisse Ökologie und Evolution"],
+ ["brunner","Biochemical Pharmacology","Brunner","SS",1,{SS2027:"12.04.–21.05.27",SS2028:"24.04.–02.06.28"},""],
+ ["core","Advanced Technologies for the Life Sciences","Core Facilities (Stöckl, Sommershof, Laumann, Voolstra, May)","WS",1,{WS2026:"02.11.–11.12.26",WS2027:"08.11.–17.12.27"},"Mikroskopie, Durchflusszytometrie, Sequenzierung"],
+ ["couzin","Collective Animal Behavior","Couzin","WS",1,{WS2026:"02.11.–11.12.26"},"2027/28 nicht angeboten"],
+ ["crofoot","Going Wild: Behavior and Ecology of Animals","Crofoot, Wikelski, Dechmann, Jordan","SS",2,{SS2027:"07.06.–16.07.27",SS2028:"Termin noch offen"},"Inkl. Feldkurs, 2–3 Wochen im Gelände"],
+ ["deuerling","Molecular Microbiology and Cell Biology: Chaperone functions in health and disease","Deuerling","SS",2,{SS2027:"07.06.–16.07.27",SS2028:"06.06.–14.07.28"},"Voraussetzung: Kompaktkurs Molekulare Mikrobiologie; Proteinreinigung, PCR, Klonierung"],
+ ["epp","Environmental Genomics","Epp","WS",1,{WS2027:"08.11.–17.12.27"},"Erst wieder im WS 2027/28"],
+ ["gruber","Applied Bioinformatics for Studying Health and Disease","Gruber","WS",1,{WS2026:"02.11.–11.12.26",WS2027:"08.11.–17.12.27"},"Keine Programmierkenntnisse nötig (R, Python, Linux im Kurs)"],
+ ["hauck","Cell Biology – Cell Adhesion and Signal Transduction","Hauck","WS",2,{WS2026:"11.01.–19.02.27",WS2027:"10.01.–18.02.28"},"Voraussetzung: Zellbiologie I+II, Biochemie II, Immunologie bestanden; Eingangsklausur vor Kursbeginn; S2-Labor"],
+ ["heesen","Comparative Behavioral Biology","Heesen","SS",1,{SS2027:"05.04.–14.05.27",SS2028:"24.04.–02.06.28"},"Grundkenntnisse vergleichende Verhaltensbiologie, R-Grundlagen"],
+ ["isono","Physiology and Biochemistry of Plants","Isono, Nagel","SS",1,{SS2027:"12.04.–21.05.27",SS2028:"24.04.–02.06.28"},""],
+ ["kleunen","Global change ecology and plants","van Kleunen u. a.","SS",2,{SS2027:"07.06.–16.07.27",SS2028:"06.06.–21.07.28"},"Zwei Exkursionen, eigenes Gruppenprojekt"],
+ ["kroth","Physiology, Ecology and Molecular Biology of Algae","Kroth","SS",1,{SS2027:"12.04.–21.05.27",SS2028:"24.04.–02.06.28"},""],
+ ["leist","Novel in vitro Methods in Pharmacology and Toxicology","Leist","WS",2,{WS2026:"11.01.–19.02.27",WS2027:"10.01.–18.02.28"},"Voraussetzung: Humanbiologie, Pharmakologie & Toxikologie I, Biochemie II; Eingangstest möglich"],
+ ["li","Microbial Ecology and Evolution","Li Richter, Han","SS",2,{SS2027:"07.06.–16.07.27",SS2028:"19.06.–28.07.28"},""],
+ ["mayans","Bioinformatics and X-Ray Structural Analysis","Mayans","WS",2,{WS2026:"07.01.–16.02.27",WS2027:"10.01.–18.02.28"},"Keine Vorkenntnisse nötig"],
+ ["mayer","Molecular Genetics: Cell cycle regulation – from mechanisms to disease","T. Mayer","WS",1,{WS2026:"11.11.–22.12.26",WS2027:"11.11.–22.12.27"},"Pflicht-Vorbesprechung (WS 26/27: 30.10.2026, 12 Uhr, ML-630)"],
+ ["mueller","Developmental Biology","P. Müller","SS",1,{SS2027:"12.04.–21.05.27",SS2028:"24.04.–02.06.28"},""],
+ ["schleheck","Microbial Ecology","Schleheck","WS",2,{WS2026:"11.01.–19.02.27",WS2027:"10.01.–18.02.28"},"Voraussetzung: Mikrobiologie I + Kompaktkurs Mikrobiologie"],
+ ["schumann","Immunology","Schumann, Schmidtke","WS",1,{WS2026:"09.11.–18.12.26",WS2027:"08.11.–17.12.27"},"Voraussetzung: Immunologie, Zellbiologie II; Hepatitis-B-Impfung empfohlen; Abschlussklausur"],
+ ["spiteller","Chemical Ecology","Spiteller","WS",2,{WS2026:"11.01.–19.02.27",WS2027:"10.01.–18.02.28"},"Solide OC, Analytik, Biochemie; Vorlesungen Chemische Ökologie und Naturstoffchemie empfohlen"],
+ ["stengel","Biochemistry","Stengel","SS",2,{SS2027:"07.06.–16.07.27",SS2028:"19.06.–28.07.28"},"Grundkenntnisse Biochemie (Proteinstruktur/-funktion), Zellbiologie, Molekulargenetik"],
+ ["voolstra","The role of microbes in stress response and resilience of aquatic metaorganisms","Voolstra","WS",2,{WS2026:"11.01.–19.02.27",WS2027:"10.01.–18.02.28"},"Grundkenntnisse Molekularbiologie/Genetik"]
+].map(([id,name,lect,term,half,dates,note])=>({id,name,lect,term,half,dates,note}));
+const VTKMAP=Object.fromEntries(VTKS.map(v=>[v.id,v]));
+const VTK_KNOWN=["WS2026","SS2027","WS2027","SS2028"];
+VTKS.forEach(v=>{
+  CAT.push({id:`vtk-${v.id}-t`,name:`${v.name} – VTK Theorie`,kind:"V",area:"bio",ects:[5],term:v.term,lect:v.lect,exam:"siehe VTK-Heft",mods:["M2","M4"],grp:"VTK",vtk:v.id,part:"T",hidden:true});
+  CAT.push({id:`vtk-${v.id}-p`,name:`${v.name} – VTK Praxis`,kind:"P",area:"bio",ects:[10],term:v.term,lect:v.lect,exam:"Projekt + Bericht/Vortrag",mods:["M3","M4"],grp:"VTK",vtk:v.id,part:"P",hidden:true});
+});
+function vtkWhen(v,n){const si=semInfo(n);
+  if(v.term!==si.term) return {ok:false,txt:`nur im ${v.term}`};
+  const d=v.dates[si.key]; if(d) return {ok:true,txt:`${v.half}. Hälfte · ${d}`};
+  if(VTK_KNOWN.includes(si.key)) return {ok:false,txt:`im ${si.label} nicht angeboten`};
+  return {ok:true,txt:`${v.half}. Hälfte · Termin noch nicht veröffentlicht`};}
+function halfOf(c){if(c.vtk&&VTKMAP[c.vtk])return {half:VTKMAP[c.vtk].half,grp:"vtk:"+c.vtk,full:true};if(c.cat==="gene")return {half:2,grp:"gene",full:false};return null}
+const CATMAP = Object.fromEntries(CAT.map(c=>[c.id,c]));
+
+/* ---------- Helfer ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = ()=>Math.random().toString(36).slice(2,10);
+const de = (x,d)=>x==null||isNaN(x)?"–":x.toFixed(d).replace(".",",");
+const trunc1 = x=>Math.floor(x*10+1e-9)/10;
+const ectsFmt = x=>Number.isInteger(x)?String(x):de(x,1);
+function toMin(t){if(!t)return null;const [h,m]=t.split(":").map(Number);return h*60+(m||0)}
+function parseDate(s){if(!s)return null;const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function todayMid(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+function daysUntil(s){const d=parseDate(s);return d?Math.round((d-todayMid())/864e5):null}
+
+/* Semesterrechnung: absolute Halbjahre, SS j = 2j, WS j/j+1 = 2j+1 */
+function startTOf(s){const y=+s.slice(2);return s.startsWith("WS")?y*2+1:y*2}
+function startT(){return startTOf(state.start)}
+function semInfo(n,st){const t=startTOf(st||state.start)+n-1;const ws=t%2===1;const y=Math.floor(t/2);
+  return {ws,term:ws?"WS":"SS",key:(ws?"WS":"SS")+y,label:ws?`WS ${y}/${String((y+1)%100).padStart(2,"0")}`:`SS ${y}`}}
+function nowT(){const d=new Date();const y=d.getFullYear(),m=d.getMonth()+1;return m>=4&&m<=9?y*2:(m>=10?y*2+1:(y-1)*2+1)}
+function currentSem(){const n=nowT()-startT()+1;return n}
+/* Zeiträume (ISO-Datum JJJJ-MM-TT) */
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function mondayOf(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+function isoWeek(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-day);const y0=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil(((x-y0)/864e5+1)/7)}
+function semBounds(n,st){const t=startTOf(st||state.start)+n-1;const y=Math.floor(t/2);return t%2?[new Date(y,9,1),new Date(y+1,2,31)]:[new Date(y,3,1),new Date(y,8,30)]}
+function vtkRange(v,n,st){const si=semInfo(n,st);if(v.term!==si.term)return null;const d=v.dates[si.key];
+  const m=d&&d.match(/^(\d\d)\.(\d\d)\.–(\d\d)\.(\d\d)\.(\d\d)$/);if(!m)return null;
+  const ey=2000+ +m[5],sy=+m[2]>+m[4]?ey-1:ey;return [`${sy}-${m[2]}-${m[1]}`,`${ey}-${m[4]}-${m[3]}`]}
+function fillVtkDates(s){s.courses.forEach(c=>{if(!c.vtk||!VTKMAP[c.vtk])return;if(c.from===undefined||c.rangeAuto){const r=vtkRange(VTKMAP[c.vtk],c.sem,s.start);c.from=r?r[0]:"";c.to=r?r[1]:"";c.rangeAuto=true}})}
+function rangeOf(c){return c&&(c.from||c.to)?[c.from||"0000-00-00",c.to||"9999-12-31"]:null}
+function activeOn(c,day){const r=rangeOf(c);return !r||(r[0]<=day&&day<=r[1])}
+const isFullDay=c=>!!c.vtk||c.kind==="P"||c.kind==="X";
+function fmtRange(c){const a=parseDate(c.from),b=parseDate(c.to);
+  const f=(d,y)=>d.toLocaleDateString("de-DE",y?{day:"2-digit",month:"2-digit",year:"numeric"}:{day:"2-digit",month:"2-digit"});
+  if(a&&b)return a.getFullYear()===b.getFullYear()?`${f(a,false)}–${f(b,true)}`:`${f(a,true)}–${f(b,true)}`;
+  if(a)return `ab ${f(a,true)}`; if(b)return `bis ${f(b,true)}`; return ""}
+function rangeWeeks(c){const a=parseDate(c.from),b=parseDate(c.to);if(!a||!b)return "";const w=Math.round(((b-a)/864e5+1)/7);return w>=1?` · ${w} Wo.`:""}
+
+/* ---------- Zustand ---------- */
+function mk(catId,sem,o){const c=CATMAP[catId];return Object.assign({id:uid(),cat:catId,name:c.name,kind:c.kind,area:c.area,ects:c.ects[0],mod:c.mods[0],sem,term:c.term,status:"plan",graded:c.graded!==false,grade:null,exp:null,note:"",ex:false,vtk:c.vtk||null,part:c.part||null},READY&&c.vtk?(()=>{const r=vtkRange(VTKMAP[c.vtk],sem);return r?{from:r[0],to:r[1],rangeAuto:true}:{rangeAuto:true}})():{},o||{})}
+let READY=false;
+function defaultState(){
+  const c = [
+    mk("bioc",1,{ex:true}), mk("gene",1,{ex:true}),
+    mk("vtk-gruber-t",1,{ex:true}),
+    mk("nmr",2,{ex:true,mod:"M4"}), mk("data",2,{ex:true,mod:"M4"}),
+    mk("bioc-p",2,{ex:true,ects:10}), mk("vtk-stengel-t",2,{ex:true}), mk("vtk-stengel-p",2,{ex:true}),
+    mk("ext3",3,{name:"Auslandspraktikum (Forschung/Industrie, mind. 3 Monate)"}),
+    mk("ma",4), mk("koll",4)
+  ];
+  const slots = [
+    {id:uid(),courseId:c[0].id,day:1,start:"10:00",end:"11:30",type:"Vorlesung",room:"",ex:true},
+    {id:uid(),courseId:c[0].id,day:3,start:"10:00",end:"11:30",type:"Vorlesung",room:"",ex:true},
+    {id:uid(),courseId:c[3].id,day:0,start:"13:30",end:"15:00",type:"Vorlesung",room:"",ex:true},
+    {id:uid(),courseId:c[3].id,day:2,start:"13:30",end:"14:15",type:"Seminar",room:"",ex:true},
+    {id:uid(),courseId:c[4].id,day:4,start:"10:00",end:"11:30",type:"Vorlesung",room:"",ex:true}
+  ];
+  const exams = [
+    {id:uid(),courseId:c[0].id,title:"",date:"2027-02-10",time:"10:00",type:"Klausur",room:"",reg:"2027-01-15",ex:true},
+    {id:uid(),courseId:c[1].id,title:"",date:"2027-02-24",time:"09:00",type:"Klausur",room:"",reg:"",ex:true}
+  ];
+  const st={v:1,start:"WS2026",abroad:3,truncate:true,forecast:false,target:"1.5",courses:c,slots,exams};fillVtkDates(st);return st;
+}
+function sanitize(s){
+  const d = defaultState();
+  if(!s||typeof s!=="object") return d;
+  const o={v:1,start:typeof s.start==="string"?s.start:d.start,abroad:Number.isInteger(s.abroad)?s.abroad:3,
+    truncate:s.truncate!==false,forecast:!!s.forecast,target:s.target||"1.5",
+    courses:Array.isArray(s.courses)?s.courses:[],slots:Array.isArray(s.slots)?s.slots:[],exams:Array.isArray(s.exams)?s.exams:[]};
+  fillVtkDates(o); return o;
+}
+const LS = "msc-ls-planer-v1";
+let state = (()=>{try{const r=localStorage.getItem(LS);if(r)return sanitize(JSON.parse(r))}catch(e){}return defaultState()})();
+READY=true;
+let ui = {tab:"planung", spSem:null, exFilter:"kommend", week:null};
+try{const t=localStorage.getItem(LS+"-tab");if(t)ui.tab=t}catch(e){}
+const h0 = (location.hash||"").slice(1); if(["planung","stundenplan","pruefungen","noten"].includes(h0)) ui.tab=h0;
+const course = id=>state.courses.find(c=>c.id===id);
+
+/* ---------- Speichern ---------- */
+let dbRef=null, saveTimer=null, saving=false, again=false, lastJSON="", dirty=false;
+function setSave(kind,txt){const el=$("#save");el.className="save "+kind;el.querySelector("span").textContent=txt}
+function commit(){render();dirty=true;clearTimeout(saveTimer);setSave("pend","Speichert …");saveTimer=setTimeout(flush,700)}
+async function flush(){
+  saveTimer=null;
+  if(saving){again=true;return}
+  const json=JSON.stringify(state);
+  try{localStorage.setItem(LS,json)}catch(e){}
+  if(!dbRef){dirty=false;setSave("ok","In diesem Browser gespeichert");return}
+  if(json===lastJSON){dirty=false;setSave("ok","Gespeichert");return}
+  saving=true;
+  try{await dbRef.set({state:JSON.parse(json),savedAt:new Date().toISOString()});lastJSON=json;if(JSON.stringify(state)===json)dirty=false;setSave("ok","In deinem Account gespeichert")}
+  catch(e){const code=e&&e.code;
+    if(code==="unavailable"&&!again){again=true}
+    else if(["invalid_argument","not_granted","revoked","capability_disabled","capability_removed"].includes(code)){dbRef=null;dirty=false;setSave("ok","In diesem Browser gespeichert")}
+    else setSave("err",code==="quota_exceeded"?"Speicher voll – Backup exportieren":"Speichern fehlgeschlagen – lokal gesichert")}
+  finally{saving=false;if(again){again=false;setTimeout(flush,400+Math.random()*600)}}
+}
+async function connect(){
+  if(!window.claude||typeof window.claude.use!=="function"){setSave("ok","In diesem Browser gespeichert");return}
+  try{
+    const [db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+    const id = user? await user.id():null;
+    if(!db||!id){setSave("ok","In diesem Browser gespeichert");return}
+    dbRef = db.doc("data/users/"+id+"/planner");
+    setSave("ok","Verbunden");
+    dbRef.onSnapshot(snap=>{
+      if(snap.metadata&&snap.metadata.hasPendingWrites) return;
+      if(!snap.exists){ if(!dirty) setSave("ok","Bereit – Änderungen werden in deinem Account gespeichert"); return; }
+      const body=snap.data(); const j=JSON.stringify(body.state);
+      if(j===lastJSON) return;
+      if(dirty||saving) return;
+      state=sanitize(JSON.parse(j)); lastJSON=JSON.stringify(state);
+      try{localStorage.setItem(LS,lastJSON)}catch(e){}
+      render(); setSave("ok","In deinem Account gespeichert");
+    },err=>{dbRef=null;setSave("ok","In diesem Browser gespeichert")});
+  }catch(e){setSave("ok","In diesem Browser gespeichert")}
+}
+
+/* ---------- Auswertung ---------- */
+function modStats(){
+  const r={};
+  MKEYS.forEach(k=>r[k]={plan:0,done:0,run:0,list:[]});
+  state.courses.forEach(c=>{const m=r[c.mod];if(!m)return;const e=+c.ects||0;m.plan+=e;m.list.push(c);if(c.status==="done")m.done+=e;if(c.status==="run")m.run+=e});
+  MKEYS.forEach(k=>{
+    const M=MODS[k],s=r[k];let st="ok",msg="erfüllt";
+    if(M.mode==="exact"){ if(s.plan<M.req){st="warn";msg=`noch ${ectsFmt(M.req-s.plan)} ECTS planen`} else if(s.plan>M.req){st="bad";msg=`${ectsFmt(s.plan-M.req)} ECTS zu viel – in M4 verschieben?`} }
+    else if(M.mode==="min"){ if(s.plan<M.req){st="warn";msg=`mind. ${ectsFmt(M.req-s.plan)} ECTS fehlen`} else msg=s.plan>M.req?`erfüllt (+${ectsFmt(s.plan-M.req)})`:"erfüllt" }
+    else { if(s.plan>M.max){st="bad";msg=`max. ${M.max} ECTS anrechenbar`} else msg=s.plan?"im Rahmen":"optional" }
+    const subs=[];
+    if(k==="M3"){const ch=s.list.filter(c=>c.area==="chem").reduce((a,c)=>a+(+c.ects||0),0),bi=s.list.filter(c=>c.area==="bio").reduce((a,c)=>a+(+c.ects||0),0);
+      if(ch!==10) subs.push(`Chemie-Praktika: ${ectsFmt(ch)}/10`); if(bi!==10) subs.push(`Bio-Praktikum: ${ectsFmt(bi)}/10`);
+      if(subs.length&&st==="ok") st="warn";}
+    if(k==="M6"){const f=s.list.filter(c=>c.cat==="fue").reduce((a,c)=>a+(+c.ects||0),0); if(f>6){subs.push(`Fächerübergreifend: ${ectsFmt(f)}/6`);st="bad"}}
+    if(k==="M7"&&s.list.some(c=>c.cat==="ma"&&+c.ects!==30)) subs.push("Masterarbeit = 30 ECTS");
+    s.st=st;s.msg=msg;s.subs=subs;
+  });
+  return r;
+}
+function totals(){let plan=0,done=0;state.courses.forEach(c=>{const e=+c.ects||0;plan+=e;if(c.status==="done")done+=e});return {plan,done}}
+function warnings(c){
+  const w=[]; const si=semInfo(c.sem);
+  if((c.term==="WS"||c.term==="SS")&&c.term!==si.term) w.push({t:`Wird nur im ${c.term} angeboten`,bad:true});
+  if(state.abroad&&c.sem===state.abroad&&(c.kind==="V"||c.kind==="S")&&c.mod!=="M6") w.push({t:"Vorlesung im Auslandssemester"});
+  if(c.cat==="bio-v"||c.cat==="bio-p") w.push({t:"Platzhalter – konkreten VTK über „+ Kurs hinzufügen“ wählen"});
+  if(c.vtk&&VTKMAP[c.vtk]){const v=VTKMAP[c.vtk];const wh=vtkWhen(v,c.sem);
+    if(!wh.ok&&v.term===si.term) w.push({t:wh.txt.charAt(0).toUpperCase()+wh.txt.slice(1),bad:true});
+    if(c.part==="P"&&!state.courses.some(o=>o.vtk===c.vtk&&o.part==="T")) w.push({t:"Theorieteil dieses VTK fehlt im Plan"});}
+  const rc=rangeOf(c),[sb0,sb1]=semBounds(c.sem);
+  if(rc&&(rc[1]<iso(sb0)||rc[0]>iso(sb1))) w.push({t:`Zeitraum liegt außerhalb von ${si.label}`,bad:true});
+  const blk=x=>isFullDay(x)||x.cat==="gene";
+  if(blk(c)){const hc=halfOf(c),seen=new Set();
+    state.courses.forEach(o=>{if(o.id===c.id||(c.vtk&&o.vtk===c.vtk)||!blk(o))return;
+      const ro=rangeOf(o);let hit=false,bad=false;
+      if(rc&&ro){hit=rc[0]<=ro[1]&&ro[0]<=rc[1];bad=isFullDay(c)&&isFullDay(o)}
+      else if(o.sem===c.sem){const ho=halfOf(o);if(hc&&ho&&hc.half===ho.half){hit=true;bad=hc.full&&ho.full}}
+      const key=o.vtk||o.id;if(!hit||seen.has(key))return;seen.add(key);
+      w.push({t:`Zeitgleich mit ${o.vtk?"VTK "+VTKMAP[o.vtk].name:o.name}`,bad})})}
+  const cat=CATMAP[c.cat];
+  if(cat&&cat.prereq){const pre=state.courses.find(x=>x.cat===cat.prereq.id);
+    if(!pre) w.push({t:`Vorlesung „${CATMAP[cat.prereq.id].name}“ fehlt im Plan`,bad:cat.prereq.strict});
+    else if(cat.prereq.strict&&pre.sem>c.sem) w.push({t:"Vorlesung muss vorher abgeschlossen sein",bad:true});}
+  if(cat&&cat.mods&&!cat.mods.includes(c.mod)&&!(c.area==="chem"&&c.kind==="V"&&c.mod==="M4")) w.push({t:`Laut Modulhandbuch für ${cat.mods.join("/")} vorgesehen`});
+  return w;
+}
+/* Noten */
+function gOf(c,useExp){if(c.grade!=null&&c.grade!=="")return +c.grade; if(useExp&&c.exp!=null&&c.exp!=="")return +c.exp; return null}
+const isGraded = c=>c.graded&&MODS[c.mod]&&MODS[c.mod].w>0;
+function gradeCalc(useExp){
+  const mods={},alpha={}; let wSum=0,wg=0,covered=0,sumA=0,sumAG=0;
+  ["M1","M2","M3","M7"].forEach(k=>{
+    const M=MODS[k]; const list=state.courses.filter(c=>c.mod===k&&isGraded(c));
+    const E=Math.max(M.gReq,list.reduce((a,c)=>a+(+c.ects||0),0));
+    let e=0,eg=0;
+    list.forEach(c=>{const g=gOf(c,useExp);alpha[c.id]=M.w*(+c.ects||0)/E;if(g!=null){e+=+c.ects;eg+=g*(+c.ects);sumA+=alpha[c.id];sumAG+=alpha[c.id]*g}});
+    let mg=e?eg/e:null; const raw=mg; if(mg!=null&&state.truncate) mg=trunc1(mg);
+    mods[k]={grade:mg,raw,ects:e,E,list,complete:e>=M.gReq};
+    if(mg!=null){wSum+=M.w;wg+=M.w*mg}
+  });
+  let fin=wSum?wg/wSum:null; const raw=fin; if(fin!=null&&state.truncate) fin=trunc1(fin);
+  return {mods,alpha,fin,raw,share:sumA,sumAG,wSum};
+}
+function praedikat(g){if(g==null)return "";return g<=1.5?"sehr gut":g<=2.5?"gut":g<=3.5?"befriedigend":g<=4.0?"ausreichend":"nicht bestanden"}
+
+/* ---------- Render ---------- */
+function render(){
+  renderSettings(); renderStats(); renderBanner();
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===ui.tab?"true":"false"));
+  const v=$("#view");
+  if(ui.tab==="planung") v.innerHTML=viewPlan();
+  else if(ui.tab==="stundenplan") v.innerHTML=viewSchedule();
+  else if(ui.tab==="pruefungen") v.innerHTML=viewExams();
+  else v.innerHTML=viewGrades();
+}
+function renderSettings(){
+  const sel=$("#set-start"); const opts=["SS2026","WS2026","SS2027","WS2027","SS2028"];
+  if(!opts.includes(state.start)) opts.unshift(state.start);
+  sel.innerHTML=opts.map(o=>{const y=+o.slice(2);const l=o.startsWith("WS")?`WS ${y}/${String((y+1)%100).padStart(2,"0")}`:`SS ${y}`;return `<option value="${o}"${o===state.start?" selected":""}>${l}</option>`}).join("");
+  $("#set-abroad").value=String(state.abroad||0);
+}
+function renderStats(){
+  const t=totals(); const g=gradeCalc(false);
+  const up=state.exams.filter(e=>{const d=daysUntil(e.date);return d!=null&&d>=0}).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const cs=currentSem(); const csl=cs>=1&&cs<=4?`Semester ${cs}`:(cs<1?"vor Studienbeginn":"nach Semester 4");
+  const pPlan=Math.min(100,t.plan/120*100),pDone=Math.min(100,t.done/120*100);
+  $("#stats").innerHTML=`
+   <div class="stat"><div class="lbl">ECTS geplant</div><div class="v">${ectsFmt(t.plan)}<small> / 120</small></div>
+     <div class="meter" aria-hidden="true"><i style="width:${pDone}%;background:var(--ok)"></i><i style="width:${Math.max(0,pPlan-pDone)}%;background:color-mix(in srgb,var(--accent) 45%,transparent)"></i></div></div>
+   <div class="stat"><div class="lbl">ECTS bestanden</div><div class="v">${ectsFmt(t.done)}</div><div class="d">${csl} · ${esc(semInfoNow())}</div></div>
+   <div class="stat"><div class="lbl">Schnitt bisher</div><div class="v">${g.fin==null?"–":de(g.fin,1)}</div><div class="d">${g.fin==null?"noch keine Noten":`${de(g.share*100,0)} % der Endnote benotet`}</div></div>
+   <div class="stat"><div class="lbl">Nächste Prüfung</div>${up?`<div class="v">${fmtCountdown(daysUntil(up.date))}</div><div class="d">${esc(examTitle(up))} · ${fmtDate(up.date)}</div>`:`<div class="v">–</div><div class="d">keine eingetragen</div>`}</div>`;
+}
+function semInfoNow(){const t=nowT();const y=Math.floor(t/2);return t%2?`WS ${y}/${String((y+1)%100).padStart(2,"0")}`:`SS ${y}`}
+function renderBanner(){
+  const n=state.courses.filter(c=>c.ex).length+state.slots.filter(s=>s.ex).length+state.exams.filter(e=>e.ex).length;
+  $("#banner").innerHTML=n?`<div class="banner"><span>Gestrichelte Einträge sind <b>Beispiele</b>: Kursauswahl als Vorschlag, Uhrzeiten und Prüfungstermine erfunden. Auslandspraktikum, Masterarbeit und Kolloquium sind fest eingeplant.</span><button class="btn sm" data-act="clear-ex">Beispiele entfernen</button></div>`:"";
+}
+function fmtDate(s){const d=parseDate(s);return d?d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}):""}
+function fmtCountdown(d){if(d==null)return "";if(d===0)return "heute";if(d===1)return "morgen";if(d<0)return `vor ${-d} T.`;return `in ${d} T.`}
+
+/* Planung */
+function viewPlan(){
+  const ms=modStats(), t=totals(), cs=currentSem();
+  const rows=MKEYS.map(k=>{const M=MODS[k],s=ms[k];const tgt=M.mode==="range"?M.max:M.req;
+    const pd=tgt?Math.min(100,s.done/tgt*100):0, pp=tgt?Math.min(100,s.plan/tgt*100):0;
+    const range=M.mode==="exact"?`${ectsFmt(s.plan)} / ${M.req}`:M.mode==="min"?`${ectsFmt(s.plan)} / ≥ ${M.req}`:`${ectsFmt(s.plan)} / 0–${M.max}`;
+    return `<div class="mrow"><div class="t"><span class="mc c-${k}">${k}</span><span class="n">${esc(M.n)}</span><span class="num small">${range}</span></div>
+      <div class="bar" aria-hidden="true"><i style="width:${pd}%;background:var(--${k.toLowerCase()})"></i><i style="width:${Math.max(0,pp-pd)}%;background:color-mix(in srgb,var(--${k.toLowerCase()}) 35%,transparent)"></i></div>
+      <div class="s"><span class="st-${s.st}">${esc(s.msg)}${s.subs.length?" · "+esc(s.subs.join(" · ")):""}</span><span class="muted">${M.w?`${M.w*100} % der Note`:"unbenotet"}</span></div>
+      <div class="h">${esc(M.hint)}</div></div>`}).join("");
+  const totSt=t.plan===120?"st-ok":t.plan<120?"st-warn":"st-warn";
+  const sems=[1,2,3,4].map(n=>{const si=semInfo(n);const list=state.courses.filter(c=>c.sem===n);
+    const sum=list.reduce((a,c)=>a+(+c.ects||0),0);
+    const cards=list.map(cardHTML).join("");
+    return `<section class="sem${state.abroad===n?" abroad":""}${cs===n?" now":""}" aria-label="Semester ${n}">
+      <header><div><div class="tt">Semester ${n}</div><div class="small muted">${si.label}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="semsum">${ectsFmt(sum)} ECTS</span>${cs===n?`<span class="tag now">jetzt</span>`:""}${state.abroad===n?`<span class="tag abr">Ausland</span>`:""}</div></header>
+      ${cards||`<div class="small muted" style="padding:4px">Noch keine Kurse.</div>`}
+      <button class="add" data-act="add" data-sem="${n}">+ Kurs hinzufügen</button></section>`}).join("");
+  return `<div class="plan"><aside class="panel mods"><div class="head"><h2>Module</h2><span class="lbl">ECTS geplant</span></div>${rows}
+    <div class="total"><span>Gesamt</span><span class="num ${totSt}">${ectsFmt(t.plan)} / 120</span></div></aside>
+    <div class="sems">${sems}</div></div>`;
+}
+function dateLine(c){const parts=[];if(c.vtk&&VTKMAP[c.vtk])parts.push(`${VTKMAP[c.vtk].half}. Hälfte`);
+  if(rangeOf(c))parts.push(fmtRange(c)+rangeWeeks(c));else if(c.vtk&&VTKMAP[c.vtk])parts.push("Termin noch nicht veröffentlicht");
+  return parts.length?`<div class="dt">${esc(parts.join(" · "))}</div>`:""}
+function cardHTML(c){
+  const w=warnings(c);
+  const g=c.grade!=null&&c.grade!==""?`Note ${de(+c.grade,1)}`:(c.exp?`erwartet ${de(+c.exp,1)}`:"");
+  return `<button class="card${c.ex?" ex":""}" data-act="edit" data-id="${c.id}">
+    <div class="r1"><span class="mc c-${c.mod}">${c.mod}</span><span class="num small">${ectsFmt(+c.ects||0)} ECTS</span></div>
+    <div class="nm">${esc(c.name)}</div>
+    <div class="r3"><span class="pill ${c.status==="done"?"done":c.status==="run"?"run":""}">${STATUS[c.status]}</span>${c.ex?`<span class="pill ex">Beispiel</span>`:""}<span>${esc(KINDS[c.kind]||"")}</span>${g?`<span class="num">${g}</span>`:""}${c.graded?"":`<span>unbenotet</span>`}</div>
+    ${dateLine(c)}
+    ${w.map(x=>`<div class="wl${x.bad?" bad":""}">${esc(x.t)}</div>`).join("")}
+  </button>`;
+}
+
+/* Stundenplan */
+const H0=8,H1=20,HPX=52;
+function defaultWeek(n){const [b0,b1]=semBounds(n);const t=todayMid();if(t>=b0&&t<=b1)return mondayOf(t);
+  return mondayOf(new Date(b0.getFullYear(),b0.getMonth(),14))}
+function viewSchedule(){
+  if(ui.spSem==null){const c=currentSem();ui.spSem=c>=1&&c<=4?c:1}
+  const n=ui.spSem; const si=semInfo(n); const [b0,b1]=semBounds(n);
+  let days=null,mon=null;
+  if(ui.week){mon=parseDate(ui.week);if(!mon||mon<mondayOf(b0)||mon>b1){mon=defaultWeek(n);ui.week=iso(mon)}days=[0,1,2,3,4].map(i=>iso(addDays(mon,i)))}
+  const semC=state.courses.filter(c=>c.sem===n);
+  const ids=new Set(semC.map(c=>c.id));
+  let slots=state.slots.filter(s=>ids.has(s.courseId));
+  if(days) slots=slots.filter(s=>activeOn(course(s.courseId),days[s.day]));
+  const conf=new Set(); const confTxt=[];
+  for(let i=0;i<slots.length;i++)for(let j=i+1;j<slots.length;j++){const a=slots[i],b=slots[j];
+    if(a.day===b.day&&toMin(a.start)<toMin(b.end)&&toMin(b.start)<toMin(a.end)){conf.add(a.id);conf.add(b.id);confTxt.push(`${DAYS[a.day]} ${esc(course(a.courseId).name)} ↔ ${esc(course(b.courseId).name)}`)}}
+  /* Ganztägige Blöcke und Prüfungen der Woche */
+  const allDay=[[],[],[],[],[]];
+  if(days){
+    days.forEach((d,i)=>{const seen=new Set();
+      state.courses.filter(c=>isFullDay(c)&&rangeOf(c)&&activeOn(c,d)).forEach(c=>{const k=c.vtk||c.id;if(seen.has(k))return;seen.add(k);
+        const both=c.vtk&&state.courses.filter(o=>o.vtk===c.vtk&&activeOn(o,d)).length>1;
+        allDay[i].push(`<button class="adc c-${c.mod}" data-act="edit" data-id="${c.id}">${esc(c.vtk?"VTK "+VTKMAP[c.vtk].name+(both?"":(c.part==="P"?" (Praxis)":" (Theorie)")):c.name)}</button>`)});
+      state.exams.filter(e=>e.date===d).forEach(e=>allDay[i].push(`<button class="adc exm" data-act="edit-exam" data-id="${e.id}">${e.time?esc(e.time)+" ":""}${esc(e.type)}: ${esc(examTitle(e))}</button>`));
+    });
+    slots.forEach(s=>{const c=course(s.courseId);if(isFullDay(c))return;
+      const blk=state.courses.find(o=>o.id!==c.id&&isFullDay(o)&&rangeOf(o)&&activeOn(o,days[s.day]));
+      if(blk){conf.add(s.id);confTxt.push(`${DAYS[s.day]} ${esc(s.start)} ${esc(c.name)} ↔ ganztägig ${esc(blk.vtk?"VTK "+VTKMAP[blk.vtk].name:blk.name)}`)}});
+  }
+  const todayIso=iso(todayMid()),todayIdx=(new Date().getDay()+6)%7,isNow=currentSem()===n;
+  const hours=[];for(let h=H0;h<=H1;h++)hours.push(`<span style="top:${(h-H0)*HPX}px">${String(h).padStart(2,"0")}:00</span>`);
+  const dayCols=DAYS.map((d,di)=>{
+    const ds=slots.filter(s=>s.day===di).sort((a,b)=>toMin(a.start)-toMin(b.start));
+    const lanes=[],lane={};ds.forEach(s=>{let l=0;while(lanes[l]&&lanes[l]>toMin(s.start))l++;lanes[l]=toMin(s.end);lane[s.id]=l});
+    const nl=Math.max(1,lanes.length);
+    const blocks=ds.map(s=>{const c=course(s.courseId);if(!c)return "";const top=(toMin(s.start)-H0*60)/60*HPX,hgt=Math.max(22,(toMin(s.end)-toMin(s.start))/60*HPX-2);
+      const wd=100/nl;
+      return `<button class="slot c-${c.mod}${conf.has(s.id)?" conf":""}${s.ex?" ex":""}" style="top:${top}px;height:${hgt}px;left:calc(${lane[s.id]*wd}% + 3px);width:calc(${wd}% - 6px)" data-act="edit-slot" data-id="${s.id}" title="${esc(c.name)}${rangeOf(c)?" · "+esc(fmtRange(c)):""}">
+        <span class="tm">${esc(s.start)}–${esc(s.end)}</span><b>${esc(c.name)}</b><span class="tm">${esc(s.type)}${s.room?" · "+esc(s.room):""}</span></button>`}).join("");
+    return `<div class="day" style="height:${(H1-H0)*HPX}px">${blocks}</div>`}).join("");
+  const head=DAYS.map((d,i)=>{const today=days?days[i]===todayIso:(isNow&&i===todayIdx);
+    return `<div class="dh${today?" today":""}">${d}${days?` <span class="dd">${parseDate(days[i]).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>`:""}</div>`}).join("");
+  const adRow=days?`<div class="adl">ganz&shy;tägig</div>${allDay.map(x=>`<div class="ad">${x.join("")}</div>`).join("")}`:"";
+  const opts=semC.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  const unsched=semC.filter(c=>(c.kind==="V"||c.kind==="S")&&!c.vtk&&!state.slots.some(s=>s.courseId===c.id));
+  const blocksNote=semC.filter(c=>c.kind==="P"||c.kind==="X"||c.kind==="A"||c.vtk);
+  const fri=mon?addDays(mon,4):null;
+  const wkLabel=mon?`KW ${isoWeek(mon)} · ${mon.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}–${fri.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}`:"";
+  const canPrev=mon&&addDays(mon,-7)>=mondayOf(b0), canNext=mon&&addDays(mon,7)<=b1;
+  return `<div class="sp-head"><div class="filters" role="group" aria-label="Semester wählen">${[1,2,3,4].map(k=>`<button class="fbtn" aria-pressed="${k===n}" data-act="sp-sem" data-sem="${k}">Sem. ${k} · ${semInfo(k).label}</button>`).join("")}</div></div>
+   <div class="sp-head"><div class="filters" role="group" aria-label="Ansicht"><button class="fbtn" data-act="wk-mode" data-m="typ" aria-pressed="${!days}">Typische Woche</button><button class="fbtn" data-act="wk-mode" data-m="kw" aria-pressed="${!!days}">Kalenderwoche</button></div>
+     ${days?`<div class="wknav"><button class="btn sm" data-act="wk-step" data-d="-7" ${canPrev?"":"disabled"} aria-label="Vorige Woche">‹</button><span class="num">${wkLabel}</span><button class="btn sm" data-act="wk-step" data-d="7" ${canNext?"":"disabled"} aria-label="Nächste Woche">›</button><button class="btn sm ghost" data-act="wk-today">Heute</button></div>`
+       :`<span class="small muted">Alle Termine des Semesters, unabhängig vom Zeitraum. Klick auf einen Termin zum Bearbeiten.</span>`}</div>
+   <div class="tt-scroll"><div class="ttg" style="--hpx:${HPX}px">
+     <div class="corner"></div>${head}${adRow}
+     <div class="hours" style="height:${(H1-H0)*HPX}px">${hours.join("")}</div>${dayCols}
+   </div></div>
+   ${confTxt.length?`<div class="conflicts"><b>Überschneidungen:</b> ${confTxt.join("; ")}</div>`:""}
+   ${opts?`<form class="panel form-row" id="slot-form">
+     <label class="field wide"><span class="lbl">Kurs</span><select id="sf-course">${opts}</select></label>
+     <label class="field"><span class="lbl">Tag</span><select id="sf-day">${DAYS.map((d,i)=>`<option value="${i}">${d}</option>`).join("")}</select></label>
+     <label class="field"><span class="lbl">Von</span><input id="sf-start" type="time" value="10:00" step="900" required></label>
+     <label class="field"><span class="lbl">Bis</span><input id="sf-end" type="time" value="11:30" step="900" required></label>
+     <label class="field"><span class="lbl">Art</span><select id="sf-type">${SLOT_TYPES.map(t=>`<option>${t}</option>`).join("")}</select></label>
+     <label class="field"><span class="lbl">Raum</span><input id="sf-room" placeholder="z. B. R 711"></label>
+     <button class="btn primary" type="submit">Termin eintragen</button></form>
+     <p class="small muted" style="margin:8px 2px 0">Den Zeitraum (von–bis) stellst du pro Veranstaltung ein: Planung → Kurs anklicken. Ohne Zeitraum läuft ein Termin das ganze Semester.</p>`
+     :`<div class="empty" style="margin-top:14px">In Semester ${n} sind noch keine Kurse geplant. Lege sie unter „Planung“ an, dann kannst du hier Zeiten eintragen.</div>`}
+   ${unsched.length||blocksNote.length?`<div class="small muted blocklist">${unsched.length?`<div>Noch ohne Termin: ${unsched.map(c=>esc(c.name)).join(", ")}</div>`:""}${blocksNote.length?`<div>Blockveranstaltungen${days?" (in der Kalenderwoche als ganztägig angezeigt, sobald ein Zeitraum eingetragen ist)":""}: ${blocksNote.map(c=>`${esc(c.name)} (${ectsFmt(+c.ects)} ECTS${rangeOf(c)?", "+esc(fmtRange(c)):", Zeitraum offen"})`).join("; ")}</div>`:""}</div>`:""}`;
+}
+
+/* Prüfungen */
+function examTitle(e){const c=course(e.courseId);return e.title||(c?c.name:"Prüfung")}
+function viewExams(){
+  const list=state.exams.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const up=list.filter(e=>{const d=daysUntil(e.date);return d==null||d>=0});
+  const past=list.filter(e=>{const d=daysUntil(e.date);return d!=null&&d<0}).reverse();
+  const shown=ui.exFilter==="kommend"?up:past;
+  const regs=state.exams.filter(e=>{const d=daysUntil(e.reg);return d!=null&&d>=0&&d<=14});
+  const opts=state.courses.map(c=>`<option value="${c.id}">S${c.sem} · ${esc(c.name)}</option>`).join("");
+  const items=shown.map(e=>{const d=parseDate(e.date);const dd=daysUntil(e.date);const c=course(e.courseId);const rd=daysUntil(e.reg);
+    const needGrade=dd!=null&&dd<0&&c&&c.graded&&(c.grade==null||c.grade==="");
+    return `<div class="exam${dd!=null&&dd<0?" past":""}${e.ex?" ex":""}">
+      <div class="dateblk">${d?`<div class="d">${d.getDate()}</div><div class="m">${d.toLocaleDateString("de-DE",{month:"short"})} ${String(d.getFullYear()).slice(2)}</div>`:`<div class="m">ohne Datum</div>`}</div>
+      <div style="min-width:0"><div class="ti">${esc(examTitle(e))}${e.ex?` <span class="pill ex">Beispiel</span>`:""}</div>
+        <div class="mt"><span>${esc(e.type)}</span>${e.time?`<span class="num">${esc(e.time)} Uhr</span>`:""}${e.room?`<span>${esc(e.room)}</span>`:""}${c?`<span class="mc c-${c.mod}">${c.mod}</span>`:""}
+        ${e.reg?`<span class="${rd!=null&&rd>=0&&rd<=7?"st-warn":""}">Anmeldung bis ${fmtDate(e.reg)}${rd!=null&&rd>=0?` (${fmtCountdown(rd)})`:""}</span>`:""}</div></div>
+      <div class="ex-actions">${dd!=null?`<span class="cd${dd===0?" today":dd<=14&&dd>0?" soon":""}">${fmtCountdown(dd)}</span>`:""}
+        ${needGrade?`<button class="btn sm primary" data-act="edit" data-id="${c.id}">Note eintragen</button>`:""}
+        <button class="btn sm ghost" data-act="edit-exam" data-id="${e.id}">Bearbeiten</button></div></div>`}).join("");
+  return `<div class="ex-grid"><div>
+     <div class="sp-head"><div class="filters" role="group"><button class="fbtn" data-act="ex-filter" data-f="kommend" aria-pressed="${ui.exFilter==="kommend"}">Kommend (${up.length})</button><button class="fbtn" data-act="ex-filter" data-f="vergangen" aria-pressed="${ui.exFilter!=="kommend"}">Vergangen (${past.length})</button></div></div>
+     ${regs.length?`<div class="banner" style="margin:0 0 10px"><span><b>Anmeldefristen bald:</b> ${regs.map(e=>`${esc(examTitle(e))} bis ${fmtDate(e.reg)}`).join("; ")}</span></div>`:""}
+     <div class="exlist">${items||`<div class="empty">${ui.exFilter==="kommend"?"Keine anstehenden Prüfungen. Trag rechts den ersten Termin ein.":"Noch keine vergangenen Prüfungen."}</div>`}</div></div>
+   <form class="panel exform" id="exam-form"><h3>Prüfung eintragen</h3>
+     <label class="field"><span class="lbl">Kurs</span><select id="ef-course"><option value="">– anderer Termin –</option>${opts}</select></label>
+     <label class="field"><span class="lbl">Bezeichnung (optional)</span><input id="ef-title" placeholder="z. B. Nachklausur"></label>
+     <div class="grid2"><label class="field"><span class="lbl">Datum</span><input id="ef-date" type="date" required></label>
+       <label class="field"><span class="lbl">Uhrzeit</span><input id="ef-time" type="time" step="900"></label></div>
+     <div class="grid2"><label class="field"><span class="lbl">Art</span><select id="ef-type">${EXAM_TYPES.map(t=>`<option>${t}</option>`).join("")}</select></label>
+       <label class="field"><span class="lbl">Raum</span><input id="ef-room"></label></div>
+     <label class="field"><span class="lbl">Anmeldefrist (ZEuS)</span><input id="ef-reg" type="date"></label>
+     <button class="btn primary" type="submit">Eintragen</button>
+     <div class="small muted" id="ef-hint"></div></form></div>`;
+}
+
+/* Noten */
+function viewGrades(){
+  const g=gradeCalc(state.forecast);
+  // Ziel
+  const T=+state.target; const bound=state.truncate?T+0.0999:T+0.0499;
+  const R=1-g.share; let needTxt;
+  if(R<=1e-6) needTxt=g.raw==null?"":"Alle benoteten Leistungen sind eingetragen.";
+  else{const need=(bound-g.sumAG)/R;
+    if(g.share===0) needTxt=`Du brauchst überall im Schnitt mindestens <b>${de(Math.min(4,bound),2)}</b>.`;
+    else if(need<1.0) needTxt=`Mit den bisherigen Noten ist ${de(T,1)} rechnerisch <b>nicht mehr erreichbar</b> (bräuchte ${de(need,2)} im Rest).`;
+    else if(need>=4.0) needTxt=`${de(T,1)} ist <b>sicher</b>, solange du den Rest bestehst.`;
+    else needTxt=`In den restlichen <b>${de(R*100,0)} %</b> der Endnote brauchst du im Schnitt <b>${de(need,2)}</b> oder besser.`;}
+  const rows=["M1","M2","M3","M7"].map(k=>{const M=MODS[k],m=g.mods[k];
+    const head=`<tr class="modrow c-${k}"><td><span class="mc c-${k}">${k}</span> ${esc(M.n)}</td><td class="r num">${ectsFmt(m.ects)} / ${M.gReq}</td><td class="r num">${M.w*100} %</td><td class="r num">${m.grade==null?"–":de(m.grade,1)}</td><td class="small muted">${m.raw!=null&&state.truncate&&Math.abs(m.raw-m.grade)>1e-9?`exakt ${de(m.raw,2)}`:""}</td></tr>`;
+    const lines=m.list.map(c=>`<tr><td style="padding-left:22px">${esc(c.name)}${c.ex?` <span class="pill ex">Beispiel</span>`:""} <span class="small muted">· Sem. ${c.sem}</span></td><td class="r num">${ectsFmt(+c.ects)}</td>
+      <td class="r num"><span class="wbar" style="width:${Math.round((g.alpha[c.id]||0)*120)}px"></span>${de((g.alpha[c.id]||0)*100,1)} %</td>
+      <td class="r"><select data-act="set-grade" data-id="${c.id}" aria-label="Note ${esc(c.name)}"><option value="">–</option>${GRADES.map(x=>`<option value="${x}"${c.grade!=null&&+c.grade===+x?" selected":""}>${x.replace(".",",")}</option>`).join("")}</select></td>
+      <td><select data-act="set-exp" data-id="${c.id}" aria-label="Erwartete Note ${esc(c.name)}"><option value="">Prognose –</option>${GRADES.map(x=>`<option value="${x}"${c.exp!=null&&+c.exp===+x?" selected":""}>~ ${x.replace(".",",")}</option>`).join("")}</select></td></tr>`).join("");
+    const missing=M.gReq-m.list.reduce((a,c)=>a+(+c.ects||0),0);
+    return head+lines+(missing>0?`<tr><td colspan="5" class="small muted" style="padding-left:22px">${ectsFmt(missing)} ECTS noch nicht geplant – zählen mit ${de(M.w*missing/M.gReq*100,1)} % zur Endnote</td></tr>`:"");}).join("");
+  return `<div class="gr-top">
+    <div class="panel big"><div class="lbl">${state.forecast?"Prognose Endnote":"Endnote bisher"}</div>
+      <div class="g">${g.fin==null?"–":de(g.fin,1)}${g.raw!=null?`<small>exakt ${de(g.raw,2)}</small>`:""}</div>
+      <div class="pred">${g.fin==null?"Trag Noten in der Tabelle ein oder setze Prognosen.":praedikat(g.fin)}</div>
+      <div class="meter" aria-hidden="true"><i style="width:${g.share*100}%;background:var(--accent)"></i></div>
+      <div class="small muted">${de(g.share*100,0)} % der Endnote sind ${state.forecast?"benotet oder prognostiziert":"benotet"}. Gewichtung laut PO: M1, M2, M3 je 20 %, Masterarbeit 40 %; innerhalb eines Moduls nach ECTS.</div>
+      <label class="chk small"><input type="checkbox" id="opt-forecast"${state.forecast?" checked":""}> Prognosen einrechnen</label>
+      <label class="chk small"><input type="checkbox" id="opt-trunc"${state.truncate?" checked":""}> Nach der 1. Nachkommastelle abschneiden (nicht runden)</label>
+    </div>
+    <div class="panel target"><h2>Zielrechner</h2>
+      <label class="field" style="max-width:200px"><span class="lbl">Wunsch-Endnote</span><select id="opt-target">${["1.0","1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","2.0","2.2","2.5","3.0"].map(x=>`<option value="${x}"${x===state.target?" selected":""}>${x.replace(".",",")}</option>`).join("")}</select></label>
+      <div class="need">${needTxt}</div>
+      <div class="small muted">Rechnet mit allen eingetragenen ${state.forecast?"und prognostizierten ":""}Noten. ${state.truncate?`Wegen des Abschneidens reicht für ${de(T,1)} alles unter ${de(T+0.1,2)}.`:""} Abschneiden auch der Modulnoten macht das Ergebnis leicht ungenau.</div>
+    </div></div>
+   <div class="tbl-wrap panel"><table><thead><tr><th>Modul / Leistung</th><th class="r">ECTS</th><th class="r">Anteil Endnote</th><th class="r">Note</th><th>Prognose</th></tr></thead><tbody>${rows}</tbody></table></div>
+   <p class="small muted" style="margin-top:12px">M4–M6, das Kolloquium und Praktika in M5 sind für die Endnote unbenotet. Prüfe die Rundungsregel (Abschneiden vs. Runden) im Notenparagrafen deiner PO.</p>`;
+}
+
+/* ---------- Modals ---------- */
+function openModal(html){$("#modal-root").innerHTML=`<div class="ov" data-act="ov-close"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const f=$("#modal-root").querySelector("input,select,button.catrow");if(f)f.focus()}
+function closeModal(){$("#modal-root").innerHTML=""}
+let addCtx={sem:1,q:"",f:"alle"};
+function openAdd(sem){addCtx={sem,q:"",f:"alle"};openModal(`<div class="mh"><h2>Kurs zu Semester ${sem} hinzufügen</h2><button class="btn sm ghost" data-act="close">Schließen</button></div>
+  <label class="field"><span class="lbl">Suchen</span><input id="add-q" placeholder="z. B. NMR, Gaich, Praktikum"></label>
+  <div class="filters" id="add-f">${[["alle","Alle"],["V","Vorlesungen"],["P","Praktika"],["fit",semInfo(sem).term+" passend"],["andere","Bio (VTK), extern, sonstige"]].map(([k,l])=>`<button class="fbtn" data-act="add-f" data-f="${k}" aria-pressed="${k==="alle"}">${l}</button>`).join("")}</div>
+  <div class="catlist" id="add-list"></div>
+  <div class="actions"><span class="small muted">Kurse aus dem Modulhandbuch Feb. 2026</span><button class="btn" data-act="custom" data-sem="${sem}">Eigenen Kurs anlegen</button></div>`);
+  renderAddList();}
+function renderAddList(){
+  const q=addCtx.q.toLowerCase(),f=addCtx.f,t=semInfo(addCtx.sem).term;
+  const used=new Set(state.courses.map(c=>c.cat));
+  const usedV=new Set(state.courses.filter(c=>c.vtk).map(c=>c.vtk));
+  let list=CAT.filter(c=>{
+    if(c.hidden)return false;
+    if(q&&!(c.name+" "+(c.lect||"")+" "+c.grp).toLowerCase().includes(q))return false;
+    if(f==="V"&&c.kind!=="V")return false; if(f==="P"&&c.kind!=="P")return false;
+    if(f==="fit"&&(c.term==="WS"||c.term==="SS")&&c.term!==t)return false;
+    if(f==="andere"&&c.area==="chem")return false; return true});
+  const vt=VTKS.filter(v=>{
+    if(q&&!(v.name+" "+v.lect+" vtk vertiefungskurs biologie").toLowerCase().includes(q))return false;
+    if(f==="fit"&&!vtkWhen(v,addCtx.sem).ok)return false; return true})
+    .sort((a,b)=>{const wa=vtkWhen(a,addCtx.sem).ok,wb=vtkWhen(b,addCtx.sem).ok;return (wb-wa)||a.half-b.half||a.name.localeCompare(b.name)});
+  const vHTML=vt.length?`<div class="catgrp"><span class="lbl">Vertiefungskurse Biologie (VTK)</span><br><span class="cm">6 Wochen ganztägig · Theorie 5 ECTS (M2), Praxis 10 ECTS (M3) · Termine aus dem VTK-Heft Sept. 2026</span></div>`+
+    vt.map(v=>{const wh=vtkWhen(v,addCtx.sem);
+      return `<div class="catrow"><span style="min-width:0"><span class="cn">${esc(v.name)}</span>${usedV.has(v.id)?` <span class="pill">schon im Plan</span>`:""}<br><span class="cm">${esc(v.lect)} · ${wh.ok?esc(wh.txt):`<span class="st-bad">${esc(wh.txt)}</span>`}${v.note?" · "+esc(v.note):""}</span></span>
+        <span class="vbtns"><button class="btn sm" data-act="pick-vtk" data-vtk="${v.id}" data-mode="T">Theorie · 5</button><button class="btn sm primary" data-act="pick-vtk" data-vtk="${v.id}" data-mode="TP">+ Praxis · 15</button></span></div>`}).join(""):"";
+  let grp="",html="",vDone=false;
+  list.forEach(c=>{
+    if(!vDone&&c.area!=="chem"){html+=vHTML;vDone=true}
+    if(c.grp!==grp){grp=c.grp;html+=`<div class="catgrp lbl">${esc(grp)}</div>`}
+    const mis=(c.term==="WS"||c.term==="SS")&&c.term!==t;
+    html+=`<button class="catrow" data-act="pick" data-cat="${c.id}"><span style="min-width:0"><span class="cn">${esc(c.name)}</span>${used.has(c.id)?` <span class="pill">schon im Plan</span>`:""}<br><span class="cm">${esc(TERMS[c.term])}${c.lect?" · "+esc(c.lect):""}${c.exam?" · "+esc(c.exam):""}${mis?` · <span class="st-bad">nicht im ${t}</span>`:""}</span></span><span class="ce">${c.ects.join("/")} ECTS<br><span class="cm">${c.mods.join(" · ")}</span></span></button>`});
+  if(!vDone) html+=vHTML;
+  $("#add-list").innerHTML=html||`<div class="empty" style="border:0">Nichts gefunden. Leg den Kurs als eigenen Kurs an.</div>`;
+}
+let draft=null;
+function openEdit(c,isNew){
+  draft=JSON.parse(JSON.stringify(c)); const cat=CATMAP[c.cat];
+  const sel=(id,obj,val)=>`<select id="${id}">${Object.entries(obj).map(([k,v])=>`<option value="${k}"${String(k)===String(val)?" selected":""}>${esc(v)}</option>`).join("")}</select>`;
+  const modOpts=Object.fromEntries(MKEYS.map(k=>[k,`${k} · ${MODS[k].n}`]));
+  const semOpts=Object.fromEntries([1,2,3,4].map(n=>[n,`Semester ${n} · ${semInfo(n).label}`]));
+  const gOpts={"":"–"};GRADES.forEach(x=>gOpts[x]=x.replace(".",","));
+  openModal(`<div class="mh"><h2>${isNew?"Kurs anlegen":"Kurs bearbeiten"}</h2><button class="btn sm ghost" data-act="close">Schließen</button></div>
+   ${c.vtk&&VTKMAP[c.vtk]?`<div class="info">VTK-Leitung: ${esc(VTKMAP[c.vtk].lect)}. ${esc(semInfo(c.sem).label)}: ${esc(vtkWhen(VTKMAP[c.vtk],c.sem).txt)}. ${VTKMAP[c.vtk].note?esc(VTKMAP[c.vtk].note)+".":""} Ganztägig, 6 Wochen.</div>`:cat&&(cat.lect||cat.exam||cat.note)?`<div class="info">${cat.lect?`Dozierende: ${esc(cat.lect)}. `:""}${cat.exam?`Prüfung: ${esc(cat.exam)}. `:""}${cat.note?esc(cat.note)+".":""}</div>`:""}
+   <form id="edit-form" class="grid2">
+    <label class="field span2"><span class="lbl">Name</span><input id="ed-name" value="${esc(c.name)}" required></label>
+    <label class="field"><span class="lbl">Modul</span>${sel("ed-mod",modOpts,c.mod)}</label>
+    <label class="field"><span class="lbl">Semester</span>${sel("ed-sem",semOpts,c.sem)}</label>
+    <div class="grid3 span2">
+     <label class="field"><span class="lbl">ECTS</span>${cat&&cat.ects.length>1?sel("ed-ects",Object.fromEntries(cat.ects.map(e=>[e,`${e} ECTS`])),c.ects):`<input id="ed-ects" type="number" min="0" max="45" step="0.5" value="${esc(c.ects)}">`}</label>
+     <label class="field"><span class="lbl">Art</span>${sel("ed-kind",KINDS,c.kind)}</label>
+     <label class="field"><span class="lbl">Bereich</span>${sel("ed-area",AREAS,c.area)}</label></div>
+    <label class="field"><span class="lbl">Zeitraum von</span><input id="ed-from" type="date" value="${esc(c.from||"")}"></label>
+    <label class="field"><span class="lbl">Zeitraum bis</span><input id="ed-to" type="date" value="${esc(c.to||"")}"></label>
+    <div class="small muted span2" style="margin-top:-4px">Leer lassen, wenn die Veranstaltung das ganze Semester läuft.${c.vtk?" Beim VTK aus dem VTK-Heft vorausgefüllt; ändert sich mit dem Semester.":""}</div>
+    <label class="field"><span class="lbl">Angebot</span>${sel("ed-term",TERMS,c.term)}</label>
+    <label class="field"><span class="lbl">Status</span>${sel("ed-status",STATUS,c.status)}</label>
+    <label class="field"><span class="lbl">Note</span>${sel("ed-grade",gOpts,c.grade==null?"":Number(c.grade).toFixed(1))}</label>
+    <label class="field"><span class="lbl">Erwartete Note (Prognose)</span>${sel("ed-exp",gOpts,c.exp==null?"":Number(c.exp).toFixed(1))}</label>
+    <label class="chk span2"><input type="checkbox" id="ed-graded"${c.graded?" checked":""}> Benotet (zählt in M1–M3 und bei der Masterarbeit zur Endnote)</label>
+    <label class="field span2"><span class="lbl">Notiz</span><textarea id="ed-note" placeholder="Betreuung, Raum, Anmeldung …">${esc(c.note)}</textarea></label>
+    <div class="actions span2">${isNew?"<span></span>":`<button type="button" class="btn danger" data-act="del-course" data-id="${c.id}">Löschen</button>`}
+      <div class="r"><button type="button" class="btn ghost" data-act="close">Abbrechen</button><button type="submit" class="btn primary">${isNew?"Hinzufügen":"Speichern"}</button></div></div>
+   </form>`);
+  draft._new=!!isNew;
+}
+function saveEdit(){
+  const v=id=>$("#"+id).value;
+  const fr=v("ed-from"),to=v("ed-to");
+  if(fr&&to&&to<fr){toast("Das Ende des Zeitraums liegt vor dem Beginn");$("#ed-to").focus();return}
+  const c=draft; const isNew=c._new; delete c._new;
+  c.name=v("ed-name").trim()||c.name; c.mod=v("ed-mod"); c.sem=+v("ed-sem"); c.ects=Math.max(0,+v("ed-ects")||0);
+  c.kind=v("ed-kind"); c.area=v("ed-area"); c.term=v("ed-term"); c.status=v("ed-status");
+  c.grade=v("ed-grade")===""?null:+v("ed-grade"); c.exp=v("ed-exp")===""?null:+v("ed-exp");
+  c.graded=$("#ed-graded").checked; c.note=v("ed-note"); c.ex=false;
+  c.from=fr; c.to=to;
+  if(c.vtk&&VTKMAP[c.vtk]){const r=vtkRange(VTKMAP[c.vtk],c.sem);c.rangeAuto=r?(fr===r[0]&&to===r[1]):(!fr&&!to)}else c.rangeAuto=false;
+  if(c.grade!=null&&c.status!=="done") c.status="done";
+  if(isNew) state.courses.push(c); else state.courses=state.courses.map(x=>x.id===c.id?c:x);
+  closeModal(); commit(); toast(isNew?"Kurs hinzugefügt":"Gespeichert");
+}
+function openSlot(s){
+  const c=course(s.courseId);
+  openModal(`<div class="mh"><h2>Termin bearbeiten</h2><button class="btn sm ghost" data-act="close">Schließen</button></div>
+   <div class="info">${esc(c?c.name:"")}</div>
+   <form id="slot-edit" class="grid2" data-id="${s.id}">
+    <label class="field"><span class="lbl">Tag</span><select id="se-day">${DAYS.map((d,i)=>`<option value="${i}"${i===s.day?" selected":""}>${d}</option>`).join("")}</select></label>
+    <label class="field"><span class="lbl">Art</span><select id="se-type">${SLOT_TYPES.map(t=>`<option${t===s.type?" selected":""}>${t}</option>`).join("")}</select></label>
+    <label class="field"><span class="lbl">Von</span><input id="se-start" type="time" step="900" value="${esc(s.start)}" required></label>
+    <label class="field"><span class="lbl">Bis</span><input id="se-end" type="time" step="900" value="${esc(s.end)}" required></label>
+    <label class="field span2"><span class="lbl">Raum</span><input id="se-room" value="${esc(s.room)}"></label>
+    <div class="actions span2"><button type="button" class="btn danger" data-act="del-slot" data-id="${s.id}">Löschen</button>
+     <div class="r"><button type="button" class="btn ghost" data-act="close">Abbrechen</button><button class="btn primary" type="submit">Speichern</button></div></div></form>`);
+}
+function openExam(e){
+  const opts=state.courses.map(c=>`<option value="${c.id}"${c.id===e.courseId?" selected":""}>S${c.sem} · ${esc(c.name)}</option>`).join("");
+  openModal(`<div class="mh"><h2>Prüfung bearbeiten</h2><button class="btn sm ghost" data-act="close">Schließen</button></div>
+   <form id="exam-edit" class="grid2" data-id="${e.id}">
+    <label class="field span2"><span class="lbl">Kurs</span><select id="ee-course"><option value="">– anderer Termin –</option>${opts}</select></label>
+    <label class="field span2"><span class="lbl">Bezeichnung</span><input id="ee-title" value="${esc(e.title)}"></label>
+    <label class="field"><span class="lbl">Datum</span><input id="ee-date" type="date" value="${esc(e.date)}" required></label>
+    <label class="field"><span class="lbl">Uhrzeit</span><input id="ee-time" type="time" step="900" value="${esc(e.time)}"></label>
+    <label class="field"><span class="lbl">Art</span><select id="ee-type">${EXAM_TYPES.map(t=>`<option${t===e.type?" selected":""}>${t}</option>`).join("")}</select></label>
+    <label class="field"><span class="lbl">Raum</span><input id="ee-room" value="${esc(e.room)}"></label>
+    <label class="field span2"><span class="lbl">Anmeldefrist</span><input id="ee-reg" type="date" value="${esc(e.reg)}"></label>
+    <div class="actions span2"><button type="button" class="btn danger" data-act="del-exam" data-id="${e.id}">Löschen</button>
+     <div class="r"><button type="button" class="btn ghost" data-act="close">Abbrechen</button><button class="btn primary" type="submit">Speichern</button></div></div></form>`);
+}
+function toast(t){const r=$("#toast-root");r.innerHTML=`<div class="toast" role="status">${esc(t)}</div>`;clearTimeout(toast._t);toast._t=setTimeout(()=>r.innerHTML="",2200)}
+/* Löschen mit Bestätigung im Button */
+function armed(btn){if(btn.classList.contains("armed"))return true;btn.classList.add("armed");btn.textContent="Wirklich löschen?";setTimeout(()=>{if(btn.isConnected){btn.classList.remove("armed");btn.textContent="Löschen"}},3500);return false}
+
+/* ---------- Events ---------- */
+document.addEventListener("click",ev=>{
+  const el=ev.target.closest("[data-act],[data-tab]"); if(!el)return;
+  if(el.dataset.tab){ui.tab=el.dataset.tab;try{localStorage.setItem(LS+"-tab",ui.tab)}catch(e){}render();return}
+  const a=el.dataset.act;
+  if(a==="ov-close"){if(ev.target===el)closeModal();return}
+  if(a==="close"){closeModal();return}
+  if(a==="add"){openAdd(+el.dataset.sem);return}
+  if(a==="add-f"){addCtx.f=el.dataset.f;document.querySelectorAll("#add-f .fbtn").forEach(b=>b.setAttribute("aria-pressed",b===el?"true":"false"));renderAddList();return}
+  if(a==="pick"){const cat=CATMAP[el.dataset.cat];openEdit(mk(cat.id,addCtx.sem),true);return}
+  if(a==="pick-vtk"){const v=VTKMAP[el.dataset.vtk],sem=addCtx.sem,ms=modStats();
+    const t=mk(`vtk-${v.id}-t`,sem,{mod:ms.M2.plan+5>10?"M4":"M2"});
+    if(el.dataset.mode==="T"){openEdit(t,true);return}
+    const bioP=ms.M3.list.filter(c=>c.area==="bio").reduce((x,c)=>x+(+c.ects||0),0);
+    const p=mk(`vtk-${v.id}-p`,sem,{mod:bioP+10>10?"M4":"M3"});
+    state.courses.push(t,p);closeModal();commit();toast(`${v.name}: Theorie (${t.mod}) und Praxis (${p.mod}) hinzugefügt`);return}
+  if(a==="custom"){openEdit({id:uid(),cat:null,name:"",kind:"V",area:"bio",ects:5,mod:"M2",sem:+el.dataset.sem,term:"frei",status:"plan",graded:true,grade:null,exp:null,note:"",ex:false},true);return}
+  if(a==="edit"){const c=course(el.dataset.id);if(c)openEdit(c,false);return}
+  if(a==="del-course"){if(!armed(el))return;const id=el.dataset.id;const old=course(id);state.exams.forEach(e=>{if(e.courseId===id){e.title=e.title||(old?old.name:"Prüfung");e.courseId=""}});state.courses=state.courses.filter(c=>c.id!==id);state.slots=state.slots.filter(s=>s.courseId!==id);closeModal();commit();toast("Kurs gelöscht");return}
+  if(a==="sp-sem"){ui.spSem=+el.dataset.sem;if(ui.week)ui.week=iso(defaultWeek(ui.spSem));render();return}
+  if(a==="wk-mode"){ui.week=el.dataset.m==="kw"?iso(defaultWeek(ui.spSem||1)):null;render();return}
+  if(a==="wk-step"){ui.week=iso(addDays(parseDate(ui.week),+el.dataset.d));render();return}
+  if(a==="wk-today"){const t=todayMid();const c=currentSem();if(c>=1&&c<=4)ui.spSem=c;ui.week=iso(mondayOf(t));render();return}
+  if(a==="edit-slot"){const s=state.slots.find(x=>x.id===el.dataset.id);if(s)openSlot(s);return}
+  if(a==="del-slot"){if(!armed(el))return;state.slots=state.slots.filter(s=>s.id!==el.dataset.id);closeModal();commit();return}
+  if(a==="ex-filter"){ui.exFilter=el.dataset.f;render();return}
+  if(a==="edit-exam"){const e=state.exams.find(x=>x.id===el.dataset.id);if(e)openExam(e);return}
+  if(a==="del-exam"){if(!armed(el))return;state.exams=state.exams.filter(e=>e.id!==el.dataset.id);closeModal();commit();return}
+  if(a==="clear-ex"){if(!el.classList.contains("armed")){el.classList.add("armed","danger");el.textContent="Wirklich entfernen?";return}
+    const exIds=new Set(state.courses.filter(c=>c.ex).map(c=>c.id));
+    state.courses=state.courses.filter(c=>!c.ex);state.slots=state.slots.filter(s=>!s.ex&&!exIds.has(s.courseId));state.exams=state.exams.filter(e=>!e.ex);
+    state.exams.forEach(e=>{if(exIds.has(e.courseId))e.courseId=""});commit();toast("Beispiele entfernt");return}
+  if(a==="export-json"){download(`masterplaner-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(state,null,2),"application/json");return}
+  if(a==="export-csv"){const rows=[["Semester","Modul","Kurs","ECTS","Von","Bis","Status","Note","Prognose","Benotet"]];
+    state.courses.slice().sort((x,y)=>x.sem-y.sem||x.mod.localeCompare(y.mod)).forEach(c=>rows.push([semInfo(c.sem).label,c.mod,c.name,String(c.ects).replace(".",","),c.from?parseDate(c.from).toLocaleDateString("de-DE"):"",c.to?parseDate(c.to).toLocaleDateString("de-DE"):"",STATUS[c.status],c.grade==null?"":de(+c.grade,1),c.exp==null?"":de(+c.exp,1),c.graded?"ja":"nein"]));
+    const csv="﻿"+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\r\n");
+    download(`notenliste-${new Date().toISOString().slice(0,10)}.csv`,csv,"text/csv");return}
+});
+document.addEventListener("input",ev=>{if(ev.target.id==="add-q"){addCtx.q=ev.target.value;renderAddList()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&$("#modal-root").innerHTML)closeModal()});
+document.addEventListener("change",ev=>{
+  const t=ev.target;
+  if(t.id==="set-start"){state.start=t.value;ui.spSem=null;ui.week=null;fillVtkDates(state);commit();return}
+  if(t.id==="ed-sem"&&draft&&draft.vtk&&VTKMAP[draft.vtk]){const f=$("#ed-from"),to=$("#ed-to");const r=vtkRange(VTKMAP[draft.vtk],+t.value);
+    const cur=vtkRange(VTKMAP[draft.vtk],draft.sem);const auto=(!f.value&&!to.value)||(cur&&f.value===cur[0]&&to.value===cur[1]);
+    if(auto){f.value=r?r[0]:"";to.value=r?r[1]:""}return}
+  if(t.id==="set-abroad"){state.abroad=+t.value;commit();return}
+  if(t.id==="opt-forecast"){state.forecast=t.checked;commit();return}
+  if(t.id==="opt-trunc"){state.truncate=t.checked;commit();return}
+  if(t.id==="opt-target"){state.target=t.value;commit();return}
+  if(t.dataset.act==="set-grade"){const c=course(t.dataset.id);if(!c)return;c.grade=t.value===""?null:+t.value;if(c.grade!=null)c.status="done";c.ex=false;commit();return}
+  if(t.dataset.act==="set-exp"){const c=course(t.dataset.id);if(!c)return;c.exp=t.value===""?null:+t.value;commit();return}
+  if(t.id==="import-file"){const f=t.files&&t.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const s=JSON.parse(r.result);if(!s||!Array.isArray(s.courses))throw 0;state=sanitize(s);commit();toast("Backup geladen")}catch(e){toast("Datei ist kein gültiges Planer-Backup")}t.value=""};r.readAsText(f);return}
+});
+document.addEventListener("submit",ev=>{
+  ev.preventDefault(); const f=ev.target;
+  if(f.id==="edit-form"){saveEdit();return}
+  if(f.id==="slot-form"){const s={id:uid(),courseId:$("#sf-course").value,day:+$("#sf-day").value,start:$("#sf-start").value,end:$("#sf-end").value,type:$("#sf-type").value,room:$("#sf-room").value.trim(),ex:false};
+    if(toMin(s.end)<=toMin(s.start)){toast("Ende muss nach dem Beginn liegen");return}
+    if(toMin(s.start)<H0*60||toMin(s.end)>H1*60){toast("Bitte zwischen 08:00 und 20:00 Uhr");return}
+    state.slots.push(s);commit();toast("Termin eingetragen");return}
+  if(f.id==="slot-edit"){const s=state.slots.find(x=>x.id===f.dataset.id);if(!s)return;
+    const st=$("#se-start").value,en=$("#se-end").value;if(toMin(en)<=toMin(st)){toast("Ende muss nach dem Beginn liegen");return}
+    Object.assign(s,{day:+$("#se-day").value,start:st,end:en,type:$("#se-type").value,room:$("#se-room").value.trim(),ex:false});closeModal();commit();return}
+  if(f.id==="exam-form"){const e={id:uid(),courseId:$("#ef-course").value,title:$("#ef-title").value.trim(),date:$("#ef-date").value,time:$("#ef-time").value,type:$("#ef-type").value,room:$("#ef-room").value.trim(),reg:$("#ef-reg").value,ex:false};
+    if(!e.courseId&&!e.title){toast("Kurs wählen oder Bezeichnung eintragen");return}
+    state.exams.push(e);ui.exFilter=(daysUntil(e.date)??0)<0?"vergangen":"kommend";commit();toast("Prüfung eingetragen");return}
+  if(f.id==="exam-edit"){const e=state.exams.find(x=>x.id===f.dataset.id);if(!e)return;
+    Object.assign(e,{courseId:$("#ee-course").value,title:$("#ee-title").value.trim(),date:$("#ee-date").value,time:$("#ee-time").value,type:$("#ee-type").value,room:$("#ee-room").value.trim(),reg:$("#ee-reg").value,ex:false});closeModal();commit();return}
+});
+let dl=null;
+async function download(name,data,type){
+  const blob=new Blob([data],{type});
+  const inClaude=!!(window.claude&&typeof window.claude.use==="function");
+  if(inClaude){
+    try{ if(!dl) dl=await window.claude.use("downloads");
+      if(!dl){toast("Download ist in dieser Ansicht nicht verfügbar");return}
+      await dl.save({filename:name,data:blob}); toast("Datei bereitgestellt");
+    }catch(e){toast(e&&e.code==="declined"?"Download abgebrochen":"Download nicht möglich")}
+    return;
+  }
+  try{const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);toast("Datei heruntergeladen")}
+  catch(e){toast("Download nicht möglich")}
+}
+
+render();
+setSave("ok","In diesem Browser gespeichert");
+connect();
+})();
+</script>
+
+</body>
+</html>
